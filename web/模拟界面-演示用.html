@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DSH 界面模拟 · 滑动变祖器（演示用假数据）</title>
+<style>
+  :root {
+    --bg: #14161a; --panel: #1b1e23; --panel2: #22262c; --line: #2e343c;
+    --ink: #e8eaee; --ink2: #a7afba; --ink3: #7b848f;
+    --blue: #4d8dff; --amber: #ffc06a;
+    --font: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font); }
+  .app { position: relative; display: flex; height: 100%; z-index: 2; }
+
+  /* 全屏档位背景（拖动时出现） */
+  .wall { position: fixed; inset: 0; z-index: 0; opacity: 0; transition: opacity .28s ease; }
+  .wall.on { opacity: 1; }
+  .wall img { position: absolute; inset: -8%; width: 116%; height: 116%; object-fit: cover; filter: blur(36px) saturate(1.1) brightness(.45); }
+  .wall .sharp { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 26%; transform: scale(1.04);
+                 filter: none; opacity: .96;
+                 -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 78%, transparent 100%);
+                 mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 78%, transparent 100%); }
+  .wall .scrim { position: absolute; inset: 0; background: radial-gradient(125% 100% at 50% 40%, rgba(8,10,14,.34), rgba(8,10,14,.62) 64%, rgba(8,10,14,.80)); }
+
+  /* 侧栏 */
+  .side { width: 300px; flex: none; background: #191c21; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+  .brand { display: flex; align-items: center; gap: 8px; padding: 20px 18px 14px; color: #dfe4ea; font-weight: 700; letter-spacing: .02em; font-size: 15px; }
+  .brand b { display: inline-block; border: 1px solid #4b5560; border-radius: 5px; padding: 1px 5px; font-size: 9px; letter-spacing: .12em; color: #9aa4b0; font-weight: 600; }
+  .newchat { margin: 4px 14px 10px; padding: 11px 12px; border-radius: 10px; background: #24282f; border: 1px solid #313841; color: #dfe4ea; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .nav { padding: 4px 8px 10px; }
+  .nav div { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; font-size: 14px; color: #b9c1cc; }
+  .nav div.on { background: #262b33; color: #eef1f5; }
+  .nav i { width: 16px; height: 16px; border-radius: 4px; background: #3b434e; display: inline-block; }
+  .group { padding: 10px 18px 6px; font-size: 11px; letter-spacing: .16em; color: #6f7986; }
+  .ws { padding: 0 10px 6px; }
+  .ws div { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 8px; font-size: 13.5px; color: #b3bcc7; }
+  .ws div.on { background: #232830; color: #e9edf2; }
+  .ws span.dot { width: 8px; height: 8px; border-radius: 3px; background: #4d8dff; }
+  .conv { padding: 2px 10px; overflow: hidden; }
+  .conv div { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; font-size: 13.5px; color: #aeb7c2; }
+  .conv div.on { background: #262b33; color: #eef1f5; }
+  .conv em { font-style: normal; margin-left: auto; font-size: 11px; color: #6f7986; }
+  .side-foot { margin-top: auto; border-top: 1px solid var(--line); padding: 14px 16px 18px; font-size: 12.5px; color: #8d97a3; }
+  .side-foot .row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .side-foot .bar { height: 4px; border-radius: 3px; background: #2c323a; margin: 8px 0 12px; overflow: hidden; }
+  .side-foot .bar b { display: block; height: 100%; width: 62%; background: linear-gradient(90deg, #4d8dff, #8b5cf6); }
+
+  /* 主区 */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
+  .top { height: 52px; display: flex; align-items: center; gap: 14px; padding: 0 22px; color: #6f7986; font-size: 12.5px; letter-spacing: .12em; }
+  .top .right { margin-left: auto; display: flex; gap: 10px; }
+  .stab { padding: 4px 9px; border-radius: 6px; }
+  .stab.on { background: #262b33; color: #cfd6df; }
+  .center { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; }
+  .hero { display: flex; align-items: center; gap: 10px; font-size: 34px; font-weight: 700; letter-spacing: .02em; color: #eef1f5; }
+  .hero small { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 999px; background: #2b3441; color: #8fb8ff; letter-spacing: .08em; }
+  .composer { width: min(760px, 86%); margin-top: 14px; border: 1px solid #38414c; border-radius: 16px; background: #1a1d22; padding: 14px 16px 12px; }
+  .composer .ph { color: #6f7986; font-size: 15px; padding: 4px 2px 18px; }
+  .bar2 { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #9aa4b0; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; border: 1px solid #333c47; background: #20242a; color: #b7c0cb; }
+  .pill.on { border-color: #4a5f7e; color: #bcd4ff; background: #1e2a3a; }
+  .pill.model { border-color: #3f74b8; color: #9dc2ff; background: #16243a; font-weight: 600; }
+  .send { margin-left: auto; width: 34px; height: 34px; border-radius: 50%; background: #3f6fd8; display: grid; place-items: center; color: #fff; font-size: 16px; }
+  .meta { width: min(760px, 86%); margin-top: 10px; display: flex; gap: 16px; font-size: 11.5px; color: #6f7986; }
+
+  /* 变阻器浮层 */
+  .pop { position: absolute; left: 50%; transform: translateX(-50%) translateY(6px); bottom: 214px; width: 560px;
+         border: 1px solid #39424e; border-radius: 14px; background: rgba(20,24,29,.97); box-shadow: 0 24px 60px rgba(0,0,0,.6);
+         padding: 14px 16px 12px; opacity: 0; transition: opacity .22s ease, transform .22s ease; }
+  .pop.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .pop .h { display: flex; align-items: center; font-size: 11px; letter-spacing: .1em; color: #7d8894; }
+  .pop .h em { margin-left: auto; font-style: normal; color: #6b7683; }
+  .pop .m { display: flex; align-items: baseline; gap: 10px; margin-top: 10px; }
+  .pop .m b { font-size: 21px; font-weight: 700; color: #f2f5f9; }
+  .pop .m span { font-size: 12px; color: #7d8894; }
+  .pop .m i { margin-left: auto; font-style: normal; font-size: 15px; font-weight: 700; color: #ffce7d; }
+  .rheo { position: relative; height: 78px; margin: 10px 0 2px; }
+  .rheo .rod { position: absolute; left: 26px; right: 26px; top: 16px; height: 5px; border-radius: 3px;
+               background: linear-gradient(180deg,#c8d2dc,#7c8794 60%,#4e5761); box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+  .rheo .tube { position: absolute; left: 20px; right: 20px; top: 34px; height: 26px; border-radius: 9px;
+                background: linear-gradient(180deg,#f6f2ea,#dcd6ca 45%,#b0a99b); box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 3px 8px rgba(0,0,0,.45); }
+  .rheo .coil { position: absolute; left: 22px; right: 22px; top: 1px; bottom: 1px; border-radius: 6px;
+                background-image: repeating-linear-gradient(88deg, rgba(255,232,182,.5) 0 1px, rgba(120,70,20,.72) 1px 3px, rgba(0,0,0,.34) 3px 4px, transparent 4px 5px),
+                                  linear-gradient(180deg,#d2a05c,#98632a 55%,#5f3a10); }
+  .rheo .plate { position: absolute; top: 8px; bottom: 6px; width: 9px; border-radius: 3px;
+                 background: linear-gradient(90deg,#5f6871,#cfd7df 38%,#8b95a1 62%,#4f565f); }
+  .rheo .plate.l { left: 0; } .rheo .plate.r { right: 0; }
+  .rheo .post { position: absolute; top: 30px; width: 9px; height: 13px; border-radius: 2px;
+                background: linear-gradient(180deg,#ff9a90,#c0392b 45%,#6f1d14); box-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  .rheo .post.l { left: 22px; } .rheo .post.r { right: 22px; }
+  .rheo .wiper { position: absolute; top: 2px; bottom: 2px; width: 26px; margin-left: -13px; }
+  .rheo .wiper .p { position: absolute; inset: 2px 0 auto; height: 12px; border-radius: 3px;
+                    background: linear-gradient(180deg,#fbfdff,#b9c4cf 55%,#6d7883); box-shadow: 0 1px 3px rgba(0,0,0,.55); border: 1px solid rgba(20,26,32,.6); }
+  .rheo .wiper .w { position: absolute; left: 6px; right: 6px; top: 13px; bottom: 14px;
+                    background: linear-gradient(100deg,#f4f8fc,#c3ccd6 40%,#8e99a5); clip-path: polygon(0 0,100% 0,62% 100%,38% 100%); }
+  .rheo .wiper .t { position: absolute; left: 50%; bottom: 12px; width: 6px; height: 5px; margin-left: -3px; border-radius: 1px;
+                    background: #eef4fb; box-shadow: 0 0 8px rgba(120,190,255,.7); }
+  .stations { position: relative; height: 16px; margin-top: 2px; }
+  .stations span { position: absolute; top: 0; transform: translateX(-50%); font-size: 11px; color: #6f7986; white-space: nowrap; }
+  .stations span.on { color: #7fc4ff; font-weight: 700; text-shadow: 0 0 10px rgba(80,170,255,.65); }
+  .ticks { display: flex; justify-content: space-between; padding: 2px 22px 0; font-size: 10px; color: #6a7481; }
+  .pop .f { display: flex; justify-content: space-between; margin-top: 8px; padding-top: 9px; border-top: 1px solid #2b323b; font-size: 11px; color: #6f7986; }
+
+  /* 插件页（模拟） */
+  .page { position: absolute; inset: 0; background: #17191d; display: none; flex-direction: column; }
+  .page.on { display: flex; }
+  .page .ph { padding: 26px 30px 14px; font-size: 26px; font-weight: 700; }
+  .page .psub { padding: 0 30px 16px; color: #7d8894; font-size: 13px; }
+  .tabs { display: flex; gap: 8px; padding: 0 30px 18px; }
+  .tabs span { padding: 8px 16px; border-radius: 9px; border: 1px solid #2f3742; color: #9aa4b0; font-size: 13.5px; }
+  .tabs span.on { background: #262b33; color: #eef1f5; border-color: #3a4450; }
+  .rows { padding: 0 30px; display: flex; flex-direction: column; gap: 10px; }
+  .row2 { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid #2b333d; border-radius: 12px; background: #1b1e23; }
+  .row2 .ico { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg,#3d6bd6,#7a5cf0); }
+  .row2 .t { font-size: 15px; font-weight: 600; }
+  .row2 .d { font-size: 12.5px; color: #7d8894; margin-top: 3px; }
+  .row2 .sw { margin-left: auto; width: 40px; height: 22px; border-radius: 999px; background: #3f6fd8; position: relative; }
+  .row2 .sw::after { content: ""; position: absolute; right: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+  .empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 90px; color: #8d97a3; font-size: 13.5px; }
+  .empty .k { width: 44px; height: 44px; border-radius: 12px; background: #253041; display: grid; place-items: center; color: #6f9bff; font-size: 22px; }
+  .empty b { color: #dfe4ea; font-size: 15px; }
+  .btn { padding: 9px 16px; border-radius: 9px; background: #262b33; border: 1px solid #3a4450; color: #dfe4ea; font-size: 13px; }
+  .dlg { position: absolute; inset: 0; background: rgba(6,8,11,.55); display: none; place-items: center; }
+  .dlg.on { display: grid; }
+  .dlg .box { width: 700px; background: #1c2026; border: 1px solid #39424e; border-radius: 16px; padding: 22px 24px; }
+  .dlg .box h3 { margin: 0 0 6px; font-size: 18px; }
+  .dlg .box p { margin: 0 0 14px; color: #8d97a3; font-size: 12.5px; }
+  .dlg input { width: 100%; padding: 12px 14px; border-radius: 10px; background: #12151a; border: 1px solid #3a4450; color: #dfe4ea; font-size: 11.5px; font-family: ui-monospace, Menlo, monospace; }
+  .dlg .acts { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+  .dlg .primary { background: #3f6fd8; border-color: #3f6fd8; color: #fff; }
+
+  .faketag { position: fixed; left: 14px; top: 10px; z-index: 9; font-size: 10px; letter-spacing: .16em; color: #4a525c; }
+</style>
+</head>
+<body>
+<div class="wall" id="wall">
+  <img id="wBlur" alt="" />
+  <img class="sharp" id="wSharp" alt="" />
+  <div class="scrim"></div>
+</div>
+
+<div class="app" id="app">
+  <aside class="side">
+    <div class="brand">deepseek <b>HARNESS</b></div>
+    <div class="newchat">＋ 新会话</div>
+    <div class="nav">
+      <div class="on"><i></i>插件</div>
+      <div><i></i>定时任务</div>
+      <div><i></i>上下文洞察</div>
+      <div><i></i>记忆系统</div>
+    </div>
+    <div class="group">工作区</div>
+    <div class="ws">
+      <div><span class="dot"></span>demo-workspace</div>
+      <div>示例项目 A</div>
+      <div>示例项目 B</div>
+      <div class="on"><span class="dot"></span>示例项目 C</div>
+    </div>
+    <div class="group">会话</div>
+    <div class="conv">
+      <div class="on">示例会话 · 选题整理<i></i><em>刚刚</em></div>
+      <div>示例会话 · 文案草稿<em>6 分钟</em></div>
+      <div>示例会话 · 素材归档<em>30 分钟</em></div>
+      <div>示例会话 · 发布检查<em>2 小时</em></div>
+    </div>
+    <div class="side-foot">
+      <div class="row"><span>余额（示例）</span><span>¥0.00</span></div>
+      <div class="row"><span>今日（示例）</span><span>¥0.00</span></div>
+      <div class="bar"><b></b></div>
+      <div class="row"><span>订阅额度 · 示例</span><span>—</span></div>
+      <div class="row" style="margin-top:6px"><span>主题</span><span>深色</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <span>对话</span><span>轨迹</span><span>上下文</span><span class="stab on">编排</span>
+      <div class="right"><span>活动</span><span>···</span></div>
+    </div>
+    <div class="center">
+      <div class="hero">演示会话 <small>SIMULATED UI</small></div>
+      <div class="composer">
+        <div class="ph">描述你想要构建的内容，/ 调用指令，@ 文件或对话</div>
+        <div class="bar2">
+          <span class="pill">＋</span>
+          <span class="pill">完全权限</span>
+          <span class="pill on" id="tg">⇄ 变阻器 开</span>
+          <span class="pill">↺ 回退</span>
+          <span class="pill model" id="chip">▸ DeepSeek-V4.1-Flash · Max</span>
+          <span class="send">↑</span>
+        </div>
+      </div>
+      <div class="meta"><span>示例数据 · 非真实账户</span><span>31 档滑片</span><span>0 轮</span></div>
+    </div>
+
+    <div class="pop" id="pop">
+      <div class="h">梁文锋 · 31 帧变阻器<em>换模型</em></div>
+      <div class="m"><b>DeepSeek-V4.1-Flash</b><span>reasoning · simulated</span><i id="score">梁子 +0</i></div>
+      <div class="rheo">
+        <div class="rod"></div>
+        <div class="plate l"></div><div class="plate r"></div>
+        <div class="tube"><div class="coil"></div></div>
+        <div class="post l"></div><div class="post r"></div>
+        <div class="wiper" id="wiper"><div class="p"></div><div class="w"></div><div class="t"></div></div>
+      </div>
+      <div class="stations" id="stations"></div>
+      <div class="ticks"><span>-15</span><span>0</span><span>+15</span></div>
+      <div class="f"><span id="ftip">预览中 · 松手保存</span><span>Default</span></div>
+    </div>
+
+    <!-- 插件页（模拟） -->
+    <div class="page" id="page">
+      <div class="ph">插件</div>
+      <div class="psub">安装、启用和配置插件　ⓘ</div>
+      <div class="tabs"><span class="on" id="tab1">已安装</span><span id="tab2">发现</span></div>
+      <div class="rows" id="rows">
+        <div class="row2"><div class="ico"></div><div><div class="t">滑动变祖器</div><div class="d">dsh-boss-slider · 0.3.0 · 31 帧滑片 · MIT-0</div></div><div class="sw"></div></div>
+        <div class="row2"><div class="ico" style="background:#37414d"></div><div><div class="t">示例插件 A</div><div class="d">演示用占位条目</div></div><div class="sw"></div></div>
+        <div class="row2"><div class="ico" style="background:#37414d"></div><div><div class="t">示例插件 B</div><div class="d">演示用占位条目</div></div><div class="sw"></div></div>
+      </div>
+      <div class="empty" id="discover" style="display:none">
+        <div class="k">◈</div>
+        <b>还没有插件市场</b>
+        <span>添加一个插件市场索引，即可在这里浏览和安装其中的插件</span>
+        <span class="btn" id="addIndex">＋ 添加索引源</span>
+      </div>
+      <div class="dlg" id="dlg">
+        <div class="box">
+          <h3>添加插件市场索引</h3>
+          <p>填入 marketplace 的 index.json 地址（https）</p>
+          <input id="idxUrl" value="https://raw.githubusercontent.com/bigpowert25-del/dsh-boss-slider/main/market/index.json" />
+          <div class="acts"><span class="btn">取消</span><span class="btn primary">添加</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+
+<script>
+const FRAMES = __FRAMES__;
+const SEGS = [["小难梁",0,5],["牢梁",6,11],["梁子",12,17],["梁圣",18,23],["梁神",24,29],["梁祖",30,30]];
+const wall = document.getElementById('wall');
+const wBlur = document.getElementById('wBlur');
+const wSharp = document.getElementById('wSharp');
+const wiper = document.getElementById('wiper');
+const stations = document.getElementById('stations');
+const score = document.getElementById('score');
+const chip = document.getElementById('chip');
+const pop = document.getElementById('pop');
+const ftip = document.getElementById('ftip');
+const LABEL_BY_IDX = (i) => SEGS.find(([, a, b]) => i >= a && i <= b)[0];
+
+for (const [name, a, b] of SEGS) {
+  const s = document.createElement('span');
+  s.textContent = name;
+  s.dataset.name = name;
+  s.style.left = ((96 + (984 - 96) * ((a + b) / 2) / 30) / 1000 * 100) + '%';
+  stations.appendChild(s);
+}
+
+function setPos(i, opts = {}) {
+  const idx = Math.max(0, Math.min(30, Math.round(i)));
+  const frac = i - Math.floor(i);
+  const a = FRAMES[Math.floor(i)];
+  const b = FRAMES[Math.min(30, Math.ceil(i))];
+  wBlur.src = a; wSharp.src = frac > 0.5 ? b : a;
+  if (opts.wall !== false) wall.classList.add('on');
+  const pct = idx / 30;
+  wiper.style.left = (26 + (560 - 32 - 52) * pct + 13) + 'px';
+  const label = LABEL_BY_IDX(idx);
+  const val = idx - 15;
+  score.textContent = label + (val >= 0 ? ' +' : ' −') + Math.abs(val);
+  for (const el of stations.children) el.classList.toggle('on', el.dataset.name === label);
+  chip.textContent = (opts.open ? '▾ ' : '▸ ') + 'DeepSeek-V4.1-Flash · ' + (opts.effort || 'Max');
+  if (opts.tip) ftip.textContent = opts.tip;
+  return { idx, label, val };
+}
+
+window.__api = {
+  setPos,
+  open(enabled) {
+    pop.classList.toggle('on', enabled);
+    if (!enabled) { wall.classList.remove('on'); chip.textContent = '▸ DeepSeek-V4.1-Flash · Max'; }
+    else { chip.textContent = '▾ DeepSeek-V4.1-Flash · Max'; }
+  },
+  page(which) {
+    const page = document.getElementById('page');
+    page.classList.toggle('on', which !== 'chat');
+    if (which === 'installed' || which === 'discover') {
+      document.getElementById('rows').style.display = which === 'installed' ? 'flex' : 'none';
+      document.getElementById('discover').style.display = which === 'discover' ? 'flex' : 'none';
+      document.getElementById('tab1').classList.toggle('on', which === 'installed');
+      document.getElementById('tab2').classList.toggle('on', which === 'discover');
+    }
+    if (which === 'chat') { document.getElementById('dlg').classList.remove('on'); }
+  },
+  dialog(on) {
+    document.getElementById('dlg').classList.toggle('on', on);
+    // 弹窗打开时把页内内容让开，避免同一张图里出现两套内容
+    const rows = document.getElementById('rows'), disc = document.getElementById('discover');
+    rows.style.visibility = on ? 'hidden' : 'visible';
+    disc.style.visibility = on ? 'hidden' : 'visible';
+  },
+};
+
+// 默认：关面板、显示第 16 帧但不铺背景
+setPos(15, { wall: false, effort: 'Max' });
+pop.classList.remove('on');
+</script>
+</body>
+</html>

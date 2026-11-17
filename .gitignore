@@ -3,3 +3,6 @@ node_modules/
 *.log
 _staging/
 work/
+
+# 渲染中间帧（compose-shorts.py 可重建，勿入库）
+media/*-frames/

@@ -78,6 +78,29 @@ pnpm add git+https://github.com/bigpowert25-del/dsh-boss-slider.git#<commit>
 
 交互：点/拖滑片换档，`←` `→` 微调，`Shift+←/→` 跳 5 档，`Home` / `End` 到两端，右上角切换三个人物系列。
 
+
+## 视频与模拟界面
+
+两条竖屏短片（1080×1920 / 30fps / 无音轨）**不是屏幕录制**，是按 DSH 界面 1:1 搭的模拟界面渲染的：
+`web/模拟界面-演示用.html`（读 `assets/frames/liang-*.webp`）或自包含的 `web/模拟界面-单文件.html`（93 帧内联）。
+
+模拟界面里所有项目名、会话名、余额都是示例值，右上/右下常驻 `SIMULATED DSH UI · DEMO DATA`，
+不出现任何真实项目、对话或账户信息。
+
+```bash
+# 在仓库根目录：先起本地静态服务，再用 chromium 截 38 张 2x 截图
+python3 -m http.server 8931 --bind 127.0.0.1 &
+node tools/capture-shorts.mjs /tmp/mock-shots       # 需要 playwright（npx 缓存即可）
+python3 tools/compose-shorts.py both                # 出 media/douyin-ep1-31档.mp4 与 douyin-ep2-教程.mp4
+```
+
+| 文件 | 规格 | 内容 |
+|---|---|---|
+| `media/douyin-ep1-31档.mp4` | 16.0s · 1080×1920 · 30fps · 4.85 MB | 31 档正片：滑片从梁祖一路拖到小难梁方向 |
+| `media/douyin-ep2-教程.mp4` | 24.0s · 1080×1920 · 30fps · 4.43 MB | 教程：发现 → 添加索引源 → 已安装 → 拖一档 |
+| `media/封面-第一弹.png` · `封面-第二弹.png` | 1080×1920 | 竖版封面 |
+| `media/文案-抖音.md` | — | 两集标题、正文、话题、时间码、发布检查单 |
+
 ## 目录结构
 
 ```

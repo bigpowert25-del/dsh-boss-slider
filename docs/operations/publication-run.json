@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "run_id": "slider-launch-20261117",
   "created_at": "2026-11-17T07:10:21.410Z",
-  "updated_at": "2026-11-17T07:10:36.680Z",
+  "updated_at": "2026-11-17T08:24:16.635Z",
   "objective": "滑动变祖器 0.3.0 上 GitHub + DSH 市场源 + 两弹抖音成片待发",
   "lifecycle": [
     "idea_captured",
@@ -86,11 +86,13 @@
       "published_url": null,
       "verified_at": null,
       "evidence": [
-        "ffprobe：ep1 1080x1920 / 30fps / 18.0s / 4.80 MB；ep2 1080x1920 / 30fps / 28.0s / 4.40 MB",
-        "抽帧目检：ep1 16.9s = 梁祖，ep2 22s = 4/4 步骤卡 + 滑片高亮"
+        "ffprobe：ep1 1080x1920/30fps/16.0s/4.85MB；ep2 1080x1920/30fps/24.0s/4.43MB",
+        "抽帧：ep1 n=200 第18档·梁子 与人像一致；ep2 n=170 弹窗 URL 完整",
+        "界面为模拟：web/模拟界面-演示用.html + 单文件版，含 SIMULATED 标记"
       ],
       "notes": [
-        "两集均无音轨，音乐在抖音内挂；用户审核后本人发布，助手未代发"
+        "两集无音轨，音乐在抖音内挂",
+        "按用户要求弃用真实界面录屏，改模拟界面渲染，无真实项目/对话/账户信息"
       ]
     }
   },
