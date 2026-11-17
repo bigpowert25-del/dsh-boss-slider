@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0",
+  "run_id": "slider-launch-20261117",
+  "created_at": "2026-11-17T07:10:21.410Z",
+  "updated_at": "2026-11-17T07:10:36.680Z",
+  "objective": "滑动变祖器 0.3.0 上 GitHub + DSH 市场源 + 两弹抖音成片待发",
+  "lifecycle": [
+    "idea_captured",
+    "evidence_reviewed",
+    "candidate_ready",
+    "local_verified",
+    "draft_saved",
+    "human_approved",
+    "user_reported_published",
+    "platform_verified_published",
+    "archived"
+  ],
+  "source": {
+    "kind": "local_project",
+    "source_sha": "06377e8edf0329f89b0cbc46cf438bb25915744a",
+    "evidence": [
+      "原插件 dsh-boss-slider 0.2.0（本机 ~/Documents/dsh-plugins/dsh-boss-slider）",
+      "验收记录 docs/验收记录-31帧.md（9/9 TAP + 浏览器三轮）"
+    ]
+  },
+  "gates": {
+    "evidence_review": "passed",
+    "content_contract": "passed",
+    "privacy_scan": "passed",
+    "technical_validation": "passed",
+    "human_content_review": "pending",
+    "human_audio_review": "not_applicable",
+    "rollback_readiness": "passed",
+    "publish_authorization": "pending"
+  },
+  "channels": {
+    "github": {
+      "status": "platform_verified_published",
+      "artifacts": [
+        "dsh-boss-slider 仓库（main @ 52608db）"
+      ],
+      "audience": "公开 · 中文开发者 / DSH 用户",
+      "publish_actor": "assistant",
+      "published_url": "https://github.com/bigpowert25-del/dsh-boss-slider",
+      "verified_at": "2026-11-17T07:10:36.680Z",
+      "evidence": [
+        "gh api repos/bigpowert25-del/dsh-boss-slider → private:false, default_branch:main, pushed_at 2026-11-17T07:08:03Z",
+        "gh api contents/market/index.json → 2261 B, sha c2025c04",
+        "jsDelivr 拉取 market/index.json → HTTP 200, 2261 B, 1.16 s"
+      ],
+      "notes": [
+        "用户指令「上传github」即本轮推送授权；未改动仓库可见性以外的任何设置"
+      ]
+    },
+    "dsh-market": {
+      "status": "candidate_ready",
+      "artifacts": [
+        "market/index.json",
+        "market/icon.png"
+      ],
+      "audience": "DSH 插件市场（自定义源）",
+      "publish_actor": "user",
+      "published_url": "https://raw.githubusercontent.com/bigpowert25-del/dsh-boss-slider/main/market/index.json",
+      "verified_at": null,
+      "evidence": [
+        "本地 parseMarketIndex 校验通过：format 1，dsh-boss-slider/0.3.0",
+        "marketInstallTarget → git+https://...#06377e8…（commit 钉死）",
+        "npm i git+...#06377e8 实测：13 s 装入，只落 6 个文件，dsh.bundle/client 字段正常"
+      ],
+      "notes": [
+        "市场源需要在插件市场手动「添加源」后才会出现在列表里",
+        "npm 未登录（ENEEDAUTH），因此走 git 源而不是 npm 源"
+      ]
+    },
+    "douyin": {
+      "status": "candidate_ready",
+      "artifacts": [
+        "media/douyin-ep1-31档.mp4",
+        "media/douyin-ep2-教程.mp4",
+        "media/封面-第一弹.png",
+        "media/封面-第二弹.png",
+        "media/文案-抖音.md"
+      ],
+      "audience": "抖音 · 中文 AI / 整活向",
+      "publish_actor": "user",
+      "published_url": null,
+      "verified_at": null,
+      "evidence": [
+        "ffprobe：ep1 1080x1920 / 30fps / 18.0s / 4.80 MB；ep2 1080x1920 / 30fps / 28.0s / 4.40 MB",
+        "抽帧目检：ep1 16.9s = 梁祖，ep2 22s = 4/4 步骤卡 + 滑片高亮"
+      ],
+      "notes": [
+        "两集均无音轨，音乐在抖音内挂；用户审核后本人发布，助手未代发"
+      ]
+    }
+  },
+  "browser_control": {
+    "status": "not_used",
+    "released_at": null,
+    "release_evidence": null
+  },
+  "remaining_work": [
+    "用户在插件市场添加 market/index.json 源并试装一次（或 npm login 后改走 npm 源）",
+    "用户审两集成片 + 文案 + 话题，确认后自己发抖音（第一弹 18s / 第二弹 28s）",
+    "发完把链接回报，状态再推进到 user_reported_published / platform_verified_published"
+  ],
+  "notes": [
+    "抖音发布者恒为用户本人；本轮只交付成片与文案。",
+    "人像为梗图二创素材，仓库 README 与 docs/素材来源与授权说明.md 已写明非商用与替换方法。"
+  ]
+}
