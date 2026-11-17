@@ -1,0 +1,58 @@
+{
+  "name": "dsh-boss-slider",
+  "version": "0.3.0",
+  "private": false,
+  "description": "滑动变祖器：把 DSH 的模型/推理强度选择器换成一台实体滑动变阻器，DeepSeek/梁文锋、GPT/奥特曼、Claude/达里奥各 31 帧全屏背景，滑片位置独立映射当前模型的真实推理等级。",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test31.cjs",
+    "build": "node build.mjs",
+    "build:demo": "node tools/build-demo.mjs"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "plugin",
+    "slider",
+    "rheostat",
+    "model-selector",
+    "reasoning-effort",
+    "web-ui"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bigpowert25-del/dsh-boss-slider.git"
+  },
+  "homepage": "https://github.com/bigpowert25-del/dsh-boss-slider#readme",
+  "author": "bigpowert25-del",
+  "engines": {
+    "dsh": ">=0.2.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-model-selection"
+      ]
+    }
+  },
+  "license": "MIT-0"
+}

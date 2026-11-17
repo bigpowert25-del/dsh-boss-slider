@@ -1,0 +1,10 @@
+# dsh-boss-slider bundle patch
+#
+# 每家模型一根自己的推理强度滑杆，占 conversation.input.model 座位，
+# 背景是该模型所属公司的老板。与 dsh-liang-calibrator 争同一座位，
+# 两者只能开一个。
+#
+# 回滚：删掉这条 insert，或在「插件」页禁用 dsh-boss-slider 即可。
+- insert:
+    - id: dsh-boss-slider
+      name: 'dsh-boss-slider'

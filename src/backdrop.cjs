@@ -1,0 +1,14 @@
+'use strict';
+/** Original three-layer wallpaper, with owner-aware cleanup and exact inline-style restoration. */
+function createBackdrop(doc,win){let layer=null,blur=null,sharp=null,hold=null,fade=null,owner=null,restore=[];
+ function restoreParents(){for(const x of restore){if(x.node.getAttribute('style')===x.applied){if(x.inline===null)x.node.removeAttribute('style');else x.node.setAttribute('style',x.inline);continue;}for(const k of ['background-color','background-image']){const expected=k==='background-color'?'transparent':'none';if(x.node.style.getPropertyValue(k)!==expected)continue;const old=x.values[k];if(old.value)x.node.style.setProperty(k,old.value,old.priority);else x.node.style.removeProperty(k);}if(!x.hadStyle&&!x.node.getAttribute('style'))x.node.removeAttribute('style');}restore=[];}
+ function cancelTimers(){if(hold!==null)clearTimeout(hold);if(fade!==null)clearTimeout(fade);hold=fade=null;}
+ function make(){if(layer?.isConnected)return;layer=doc.createElement('div');layer.className='ls-wallpaper';layer.dataset.boss31='';layer.setAttribute('aria-hidden','true');blur=doc.createElement('img');sharp=doc.createElement('img');blur.className='ls-wallpaper-blur';sharp.className='ls-wallpaper-sharp';blur.alt=sharp.alt='';const scrim=doc.createElement('div');scrim.className='ls-wallpaper-scrim';layer.append(blur,sharp,scrim);doc.body.prepend(layer);}
+ function expose(root){for(let node=root?.parentElement;node&&node!==doc.documentElement;node=node.parentElement){const computed=win.getComputedStyle(node);const color=computed.backgroundColor;const transparent=color==='transparent'||/rgba\([^)]*,\s*0\s*\)/.test(color);const image=computed.backgroundImage&&computed.backgroundImage!=='none';if(transparent&&!image)continue;const values={};for(const k of ['background-color','background-image'])values[k]={value:node.style.getPropertyValue(k),priority:node.style.getPropertyPriority(k)};const saved={node,values,hadStyle:node.hasAttribute('style'),inline:node.getAttribute('style')};restore.push(saved);node.style.setProperty('background-color','transparent','important');node.style.setProperty('background-image','none','important');saved.applied=node.getAttribute('style');}}
+ function hide(){if(layer)layer.classList.remove('ls-wallpaper-on');fade=setTimeout(()=>{restoreParents();fade=null;owner=null;},320);}
+ function show(id,root,url){if(!url)return;cancelTimers();if(owner!==id){restoreParents();owner=id;expose(root);}make();if(sharp.getAttribute('src')!==url){sharp.src=url;blur.src=url;}layer.classList.add('ls-wallpaper-on');hold=setTimeout(()=>{hold=null;hide();},5000);}
+ function release(id){if(owner!==id)return;cancelTimers();layer?.classList.remove('ls-wallpaper-on');restoreParents();owner=null;}
+ function dispose(){cancelTimers();restoreParents();layer?.remove();layer=blur=sharp=null;owner=null;}
+ return {show,release,dispose};
+}
+module.exports={createBackdrop};
