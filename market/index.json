@@ -1,0 +1,87 @@
+{
+  "format": 1,
+  "title": {
+    "zh": "大功率 DSH 插件源",
+    "en": "Bigpower DSH plugin source"
+  },
+  "description": {
+    "zh": "自用 DSH 插件：变阻器滑片、界面改造等，MIT-0。",
+    "en": "Self-built DSH plugins: rheostat model slider and UI tweaks. MIT-0."
+  },
+  "metadata": {
+    "categories": {
+      "ui": {
+        "title": {
+          "zh": "界面",
+          "en": "Interface"
+        }
+      }
+    },
+    "labels": {
+      "open-source": {
+        "title": {
+          "zh": "开源",
+          "en": "Open source"
+        }
+      }
+    },
+    "sortKeys": {
+      "added": {
+        "title": {
+          "zh": "上架时间",
+          "en": "Added"
+        },
+        "order": "desc"
+      }
+    }
+  },
+  "plugins": [
+    {
+      "name": "dsh-boss-slider",
+      "title": {
+        "zh": "滑动变祖器",
+        "en": "Boss Slider (Rheostat)"
+      },
+      "description": {
+        "zh": "把输入框的模型/思考强度选择器换成实体滑动变阻器：31 档人像逐帧变化，DeepSeek/GPT/Claude 各 31 帧，松手才提交，失败自动回滚。",
+        "en": "Replaces the model/reasoning selector with a physical slide-wire rheostat: 31 portrait steps for DeepSeek, GPT and Claude, commit on release, automatic rollback on failure."
+      },
+      "icon": "./icon.png",
+      "author": "bigpowert25-del",
+      "homepage": "https://github.com/bigpowert25-del/dsh-boss-slider",
+      "repository": {
+        "url": "https://github.com/bigpowert25-del/dsh-boss-slider"
+      },
+      "metadata": {
+        "category": "ui",
+        "keywords": [
+          "slider",
+          "rheostat",
+          "model-selector",
+          "reasoning-effort",
+          "images"
+        ],
+        "labels": [
+          "open-source"
+        ],
+        "sortKeys": {
+          "added": 1794899275
+        }
+      },
+      "versions": [
+        {
+          "version": "0.3.0",
+          "publishTimestamp": 1794899275,
+          "source": {
+            "type": "git",
+            "url": "https://github.com/bigpowert25-del/dsh-boss-slider",
+            "commit": "06377e8edf0329f89b0cbc46cf438bb25915744a"
+          },
+          "engines": {
+            "dsh": ">=0.2.0"
+          }
+        }
+      ]
+    }
+  ]
+}
