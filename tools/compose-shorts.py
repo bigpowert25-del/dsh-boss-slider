@@ -14,7 +14,7 @@ import subprocess
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 W, H, FPS = 1080, 1920, 30
-SRC = "/tmp/mock3"
+SRC = "/tmp/mock6"
 OUT = "/Users/mac/Documents/交付/滑动变祖器-发布包-20261117/dsh-boss-slider/media"
 F_SERIF = "/System/Library/Fonts/Supplemental/Songti.ttc"
 F_SANS = "/System/Library/Fonts/Hiragino Sans GB.ttc"
@@ -117,8 +117,12 @@ def fade(img, a):
     return Image.blend(Image.new("RGB", (W, H), (0, 0, 0)), img, a)
 
 
-def clip(frames, out, tag_text):
+def clip(frames, out, tag_text=None):
     work = out.replace(".mp4", "-frames")
+    if os.path.isdir(work):
+        for n in os.listdir(work):
+            if n.endswith('.png'):
+                os.remove(os.path.join(work, n))
     os.makedirs(work, exist_ok=True)
     for i, im in enumerate(frames):
         im.save(os.path.join(work, "f%04d.png" % i), compress_level=1)
@@ -128,112 +132,121 @@ def clip(frames, out, tag_text):
     print(out, round(os.path.getsize(out) / 1e6, 2), "MB")
 
 
-# ------------------------------------------------------------------ 第一弹
+# ------------------------------------------------------------------ 第一弹（12s · 三家轮滑）
 
 
 def ep1():
-    """时间线（秒）：
-       0.0–1.6  空会话，轻推
-       1.6–2.7  浮层展开（同机位同倍率交叉，UI 不动、只有浮层淡入）
-       2.7–10.2 逐档拖动（每档 0.24s）
-       10.2–13.2 定格梁祖
-       13.2–13.5 压黑
-       13.5–16.0 收尾：仓库
-    所有交叉的两张图必须同倍率同焦点，否则会重影。"""
-    total = 16.0
+    """12s：梁文锋满屏拖 → 换奥特曼（只看浮层）→ 换达里奥 → 仓库。"""
+    total = 12.0
     n = int(total * FPS)
-    Z = 1.03
-    FX, FY = 0.50, 0.545
-    HOLD = 0.24
-    labels = ["小难梁", "牢梁", "梁子", "梁圣", "梁神", "梁祖"]
+    STEP = 0.075
     out = []
     for i in range(n):
         sec = i / FPS
-        if sec < 1.6:
-            p = ease(sec / 1.6)
-            img = crop_zoom(shot("s0-idle.png"), 1.0 + 0.03 * p, FX, FY)
-            caption(img, [("把思考强度做成一根滑片", 46, INK)], alpha=min(1, sec / 0.5))
-        elif sec < 2.7:
-            p = ease((sec - 1.6) / 1.1)
-            a = crop_zoom(shot("s0-idle.png"), Z, FX, FY)
-            b = crop_zoom(shot("s1-open.png"), Z, FX, FY)
+        if sec < 1.0:
+            p = ease(sec / 1.0)
+            img = crop_zoom(shot('s0-idle.png'), 1.0 + 0.02 * p, 0.50, 0.545)
+            cap = [('把思考强度做成一根滑片', 44, INK)]
+        elif sec < 1.8:
+            p = ease((sec - 1.0) / 0.8)
+            a = crop_zoom(shot('s0-idle.png'), 1.03, 0.50, 0.545)
+            b = crop_zoom(shot('s1-open.png'), 1.03, 0.50, 0.545)
             img = Image.blend(a, b, p)
-            caption(img, [("点开就是 31 档变阻器", 46, INK)], alpha=min(1, (sec - 1.6) / 0.4))
+            cap = [('31 档，换模型也不换滑片', 44, INK)]
         elif sec < 10.2:
-            k = (sec - 2.7) / HOLD
-            idx = min(30, int(k))
+            if sec < 4.1:
+                fam, t0, full = 'liang', 1.8, True
+            elif sec < 6.4:
+                fam, t0, full = 'sam', 4.1, False
+            elif sec < 8.7:
+                fam, t0, full = 'dario', 6.4, False
+            else:
+                fam, t0, full = 'dario', 8.7, False
+            k = (sec - t0) / STEP
+            idx = min(30, max(0, int(k)))
             frac = k - idx
             nxt = min(30, idx + 1)
-            z = 1.02 + 0.03 * ((sec - 2.7) / 7.5)
-            a = crop_zoom(shot("drag-%02d.png" % idx), z, FX, 0.56)
-            b = crop_zoom(shot("drag-%02d.png" % nxt), z, FX, 0.56)
-            img = Image.blend(a, b, min(1.0, frac * 1.6))
+            if full:
+                z = 1.02 + 0.03 * ((sec - 1.8) / 2.3)
+                a = crop_zoom(shot('drag-%s-%02d.png' % (fam, idx)), z, 0.50, 0.56)
+                b = crop_zoom(shot('drag-%s-%02d.png' % (fam, nxt)), z, 0.50, 0.56)
+            else:
+                a = crop_zoom(shot('drag-%s-%02d.png' % (fam, idx)), 1.28, 0.60, 0.72)
+                b = crop_zoom(shot('drag-%s-%02d.png' % (fam, nxt)), 1.28, 0.60, 0.72)
+            img = Image.blend(a, b, min(1.0, frac * 1.8))
             shown = idx if frac < 0.5 else nxt
-            caption(img, [("第 %02d 档 · %s" % (shown + 1, labels[min(5, shown // 6)]), 44, INK),
-                          ("拖动只换人像，松手才保存", 30, DIM)])
-        elif sec < 13.2:
-            p = (sec - 10.2) / 3.0
-            img = crop_zoom(shot("drag-30.png"), 1.04 + 0.02 * p, FX, 0.52)
-            caption(img, [("滑到底：梁祖", 54, GOLD), ("DeepSeek / GPT / Claude 各 31 帧", 30, DIM)])
-        elif sec < 13.45:
-            img = Image.new("RGB", (W, H), (0, 0, 0))
+            nm = {'liang': ('DeepSeek', '梁文锋'), 'sam': ('GPT', '奥特曼'), 'dario': ('Claude', '达里奥')}[fam]
+            labels = {'liang': ['小难梁', '牢梁', '梁子', '梁圣', '梁神', '梁祖'],
+                      'sam': ['小奥', '牢奥', '奥特曼', '奥圣', '奥神', '奥祖'],
+                      'dario': ['小达', '牢达', '达里奥', '达圣', '达神', '达祖']}[fam]
+            cap = [('%s · %s' % nm, 44, INK), ('第 %02d 档 %s' % (shown + 1, labels[min(5, shown // 6)]), 30, GOLD)]
         else:
-            p = ease((sec - 13.45) / 2.4)
-            img = crop_zoom(shot("s2-closed.png"), Z + 0.03 * p, FX, 0.55)
-            caption(img, [("开源：dsh-boss-slider", 44, INK),
-                          ("github.com/bigpowert25-del/dsh-boss-slider", 26, GOLD)])
-        tag(img, "SIMULATED DSH UI · DEMO DATA")
-        a = min(1.0, sec / 0.3) * min(1.0, (total - sec) / 0.35)
+            p = ease((sec - 10.2) / 1.8)
+            img = crop_zoom(shot('drag-dario-30.png'), 1.28 - 0.03 * p, 0.60, 0.72)
+            cap = [('同一根滑片，三家 93 帧', 44, INK), ('github.com/bigpowert25-del/dsh-boss-slider', 26, GOLD)]
+        caption(img, cap, y=1124)
+        tag(img, 'SIMULATED DSH UI · DEMO DATA')
+        a = min(1.0, sec / 0.25) * min(1.0, (total - sec) / 0.3)
         out.append(fade(grain(img), a))
-    clip(out, os.path.join(OUT, "douyin-ep1-31档.mp4"), "EP1")
-
-
-# ------------------------------------------------------------------ 第二弹
+    clip(out, os.path.join(OUT, 'douyin-ep1-31档.mp4'))
 
 
 def ep2():
-    """教程顺序：发现空态 → 添加索引源 → 已安装列表 → 输入框 → 拖一档。"""
-    total = 24.0
+    total = 16.0
     n = int(total * FPS)
     CAP_Y = 1422
     out = []
     for i in range(n):
         sec = i / FPS
-        if sec < 3.2:                                   # 发现：还没有市场
-            p = ease(sec / 3.2)
-            img = crop_region(shot("s4-discover.png"), 1380, 1200, 1450 - 60 * p)
-            caption(img, [("插件市场 · 发现", 46, INK), ("空的时候只有一条「添加索引源」", 30, DIM)], y=CAP_Y)
-        elif sec < 7.6:                                 # 添加索引源弹窗
-            p = ease((sec - 3.2) / 4.4)
-            img = crop_region(shot("s5-dialog.png"), 1400, 1900, 1750 - 60 * p)
-            caption(img, [("粘一条 index.json 地址", 44, INK),
-                          ("raw.githubusercontent.com/bigpowert25-del/dsh-boss-slider", 22, GOLD)], y=CAP_Y)
-        elif sec < 11.0:                                # 已安装列表
-            p = ease((sec - 7.6) / 3.4)
-            img = crop_region(shot("s3-installed.png"), 1400, 1180, 1420 - 60 * p)
-            caption(img, [("列表里就出现「滑动变祖器」", 42, INK), ("0.3.0 · MIT-0 · 93 帧内置", 30, DIM)], y=CAP_Y)
-        elif sec < 14.4:                                # 输入框
-            p = ease((sec - 11.0) / 3.4)
-            img = crop_region(shot("s0-idle.png"), 1340, 1520, 1900 - 60 * p)
-            caption(img, [("启用后，输入框多一个变阻器", 42, INK), ("关掉就回到原生下拉", 30, DIM)], y=CAP_Y)
-        elif sec < 21.6:                                # 拖动
-            k = (sec - 14.4) / 0.22
-            idx = min(30, int(k))
-            frac = k - idx
-            nxt = min(30, idx + 1)
-            a = crop_zoom(shot("drag-%02d.png" % idx), 1.02, 0.50, 0.58)
-            b = crop_zoom(shot("drag-%02d.png" % nxt), 1.02, 0.50, 0.58)
-            img = Image.blend(a, b, min(1.0, frac * 1.6))
-            caption(img, [("拖滑片 = 选模型 + 思考强度", 42, INK), ("松手才提交，失败自动回滚", 30, DIM)], y=CAP_Y)
-        else:                                           # 收尾
-            p = ease((sec - 21.6) / 2.4)
-            img = crop_zoom(shot("drag-30.png"), 1.03 + 0.02 * p, 0.50, 0.52)
-            caption(img, [("MIT-0 · 93 帧内置 · 不联网生图", 40, INK),
-                          ("github.com/bigpowert25-del/dsh-boss-slider", 26, GOLD)], y=CAP_Y)
-        tag(img, "SIMULATED DSH UI · DEMO DATA")
-        a = min(1.0, sec / 0.3) * min(1.0, (total - sec) / 0.35)
+        if sec < 2.2:
+            p = ease(sec / 2.2)
+            img = crop_region(shot('s4-discover.png'), 1380, 1200, 1450 - 50 * p)
+            cap = [('插件市场 · 发现', 44, INK), ('只有一条「添加索引源」', 30, DIM)]
+        elif sec < 4.8:
+            p = ease((sec - 2.2) / 2.6)
+            img = crop_region(shot('s5-dialog.png'), 1400, 1900, 1750 - 50 * p)
+            cap = [('粘一条 index.json 地址', 42, INK), ('raw.githubusercontent.com/…/market/index.json', 22, GOLD)]
+        elif sec < 7.0:
+            p = ease((sec - 4.8) / 2.2)
+            img = crop_region(shot('s3-installed.png'), 1400, 1180, 1420 - 50 * p)
+            cap = [('列表里出现「滑动变祖器」', 42, INK), ('0.3.0 · MIT-0 · 93 帧内置', 30, DIM)]
+        elif sec < 9.2:
+            p = ease((sec - 7.0) / 2.2)
+            img = crop_region(shot('s0-idle.png'), 1340, 1520, 1900 - 50 * p)
+            cap = [('启用后输入框多一个变阻器', 42, INK), ('关掉就回原生下拉', 30, DIM)]
+        elif sec < 14.2:
+            if sec < 11.6:
+                fam, t0 = 'liang', 9.2
+            elif sec < 12.0:
+                fam, t0 = None, 0
+            else:
+                fam, t0 = 'sam', 12.0
+            if fam is None:
+                p = ease((sec - 11.6) / 0.4)
+                a = crop_zoom(shot('drag-liang-30.png'), 1.02, 0.50, 0.58)
+                b = crop_zoom(shot('open-sam.png'), 1.02, 0.50, 0.58)
+                img = Image.blend(a, b, p)
+                cap = [('换模型：DeepSeek → GPT', 42, INK), ('滑片位置不动', 30, DIM)]
+            else:
+                k = (sec - t0) / 0.085
+                idx = min(30, max(0, int(k)))
+                frac = k - idx
+                nxt = min(30, idx + 1)
+                zz, ffy = (1.02, 0.58) if fam == 'liang' else (1.28, 0.72)
+                a = crop_zoom(shot('drag-%s-%02d.png' % (fam, idx)), zz, 0.50, ffy)
+                b = crop_zoom(shot('drag-%s-%02d.png' % (fam, nxt)), zz, 0.50, ffy)
+                img = Image.blend(a, b, min(1.0, frac * 1.8))
+                namec = 'DeepSeek' if fam == 'liang' else 'GPT'
+                cap = [('拖滑片 = 选模型 + 思考强度', 42, INK), (namec + ' · 松手才提交', 30, DIM)]
+        else:
+            p = ease((sec - 14.2) / 1.8)
+            img = crop_zoom(shot('drag-sam-30.png'), 1.28, 0.60, 0.72)
+            cap = [('MIT-0 · 93 帧内置 · 不联网生图', 38, INK), ('github.com/bigpowert25-del/dsh-boss-slider', 26, GOLD)]
+        caption(img, cap, y=(1124 if sec >= 9.2 else CAP_Y))
+        tag(img, 'SIMULATED DSH UI · DEMO DATA')
+        a = min(1.0, sec / 0.25) * min(1.0, (total - sec) / 0.3)
         out.append(fade(grain(img), a))
-    clip(out, os.path.join(OUT, "douyin-ep2-教程.mp4"), "EP2")
+    clip(out, os.path.join(OUT, 'douyin-ep2-教程.mp4'))
 
 
 if __name__ == "__main__":

@@ -23,6 +23,7 @@
                  filter: none; opacity: .96;
                  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 78%, transparent 100%);
                  mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 78%, transparent 100%); }
+  .wall .sharp-contain { object-fit: contain !important; transform: none !important; -webkit-mask-image: none !important; mask-image: none !important; }
   .wall .scrim { position: absolute; inset: 0; background: radial-gradient(125% 100% at 50% 40%, rgba(8,10,14,.34), rgba(8,10,14,.62) 64%, rgba(8,10,14,.80)); }
 
   /* 侧栏 */
@@ -197,7 +198,7 @@
     </div>
 
     <div class="pop" id="pop">
-      <div class="h">梁文锋 · 31 帧变阻器<em>换模型</em></div>
+      <div class="h">梁文锋 · 31 帧变阻器<em id="switchFam" style="cursor:pointer">换模型 ⇄</em></div>
       <div class="m"><b>DeepSeek-V4.1-Flash</b><span>reasoning · simulated</span><i id="score">梁子 +0</i></div>
       <div class="rheo">
         <div class="rod"></div>
@@ -241,8 +242,23 @@
 
 
 <script>
-const FRAMES = __FRAMES__;
-const SEGS = [["小难梁",0,5],["牢梁",6,11],["梁子",12,17],["梁圣",18,23],["梁神",24,29],["梁祖",30,30]];
+const FRAMES = {
+  liang: __FRAMES_LIANG__,
+  sam: __FRAMES_SAM__,
+  dario: __FRAMES_DARIO__,
+};
+const FAMILY = {
+  liang: { title: '梁文锋 · 31 帧变阻器', model: 'DeepSeek-V4.1-Flash' },
+  sam:   { title: '奥特曼 · 31 帧变阻器', model: 'GPT-5' },
+  dario: { title: '达里奥 · 31 帧变阻器', model: 'Claude Opus' },
+};
+let family = 'liang';
+const RANGES = [[0,5],[6,11],[12,17],[18,23],[24,29],[30,30]];
+const SEGS_BY_FAMILY = {
+  liang: ['小难梁','牢梁','梁子','梁圣','梁神','梁祖'],
+  sam:   ['小奥','牢奥','奥特曼','奥圣','奥神','奥祖'],
+  dario: ['小达','牢达','达里奥','达圣','达神','达祖'],
+};
 const wall = document.getElementById('wall');
 const wBlur = document.getElementById('wBlur');
 const wSharp = document.getElementById('wSharp');
@@ -252,36 +268,66 @@ const score = document.getElementById('score');
 const chip = document.getElementById('chip');
 const pop = document.getElementById('pop');
 const ftip = document.getElementById('ftip');
-const LABEL_BY_IDX = (i) => SEGS.find(([, a, b]) => i >= a && i <= b)[0];
-
-for (const [name, a, b] of SEGS) {
-  const s = document.createElement('span');
-  s.textContent = name;
-  s.dataset.name = name;
-  s.style.left = ((96 + (984 - 96) * ((a + b) / 2) / 30) / 1000 * 100) + '%';
-  stations.appendChild(s);
+const LABEL_BY_IDX = (i) => {
+  const names = SEGS_BY_FAMILY[family];
+  const k = RANGES.findIndex(([a, b]) => i >= a && i <= b);
+  return names[k < 0 ? 5 : k];
+};
+function renderStations() {
+  const names = SEGS_BY_FAMILY[family];
+  stations.innerHTML = '';
+  names.forEach((name, k) => {
+    const [a, b] = RANGES[k];
+    const el = document.createElement('span');
+    el.textContent = name;
+    el.dataset.name = name;
+    el.style.left = ((96 + (984 - 96) * ((a + b) / 2) / 30) / 1000 * 100) + '%';
+    stations.appendChild(el);
+  });
 }
 
+renderStations();
+
 function setPos(i, opts = {}) {
+  window.__pos = i;
   const idx = Math.max(0, Math.min(30, Math.round(i)));
   const frac = i - Math.floor(i);
-  const a = FRAMES[Math.floor(i)];
-  const b = FRAMES[Math.min(30, Math.ceil(i))];
+  const set = FRAMES[family];
+  const a = set[Math.min(30, Math.floor(i))];
+  const b = set[Math.min(30, Math.ceil(i))];
   wBlur.src = a; wSharp.src = frac > 0.5 ? b : a;
   if (opts.wall !== false) wall.classList.add('on');
+  wSharp.classList.toggle('sharp-contain', family !== 'liang');
   const pct = idx / 30;
   wiper.style.left = (26 + (560 - 32 - 52) * pct + 13) + 'px';
   const label = LABEL_BY_IDX(idx);
   const val = idx - 15;
   score.textContent = label + (val >= 0 ? ' +' : ' −') + Math.abs(val);
   for (const el of stations.children) el.classList.toggle('on', el.dataset.name === label);
-  chip.textContent = (opts.open ? '▾ ' : '▸ ') + 'DeepSeek-V4.1-Flash · ' + (opts.effort || 'Max');
+  chip.textContent = (opts.open ? '▾ ' : '▸ ') + FAMILY[family].model + ' · ' + (opts.effort || 'Max');
+  document.querySelector('.pop .h').firstChild.textContent = FAMILY[family].title;
+  document.querySelector('.pop .m b').textContent = FAMILY[family].model;
   if (opts.tip) ftip.textContent = opts.tip;
   return { idx, label, val };
 }
 
+document.getElementById('switchFam').addEventListener('click', () => {
+  const order = ['liang', 'sam', 'dario'];
+  const next = order[(order.indexOf(family) + 1) % order.length];
+  window.__api.family(next);
+});
+
 window.__api = {
   setPos,
+  family(name) {
+    if (!FAMILY[name]) return;
+    family = name;
+    renderStations();
+    document.querySelector('.pop .h').firstChild.textContent = FAMILY[name].title;
+    document.querySelector('.pop .m b').textContent = FAMILY[name].model;
+    const cur = Number(document.querySelector('.ls-range') ? 15 : 15);
+    setPos(window.__pos == null ? 15 : window.__pos, { effort: 'Max' });
+  },
   open(enabled) {
     pop.classList.toggle('on', enabled);
     if (!enabled) { wall.classList.remove('on'); chip.textContent = '▸ DeepSeek-V4.1-Flash · Max'; }
